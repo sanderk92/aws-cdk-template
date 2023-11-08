@@ -25,11 +25,10 @@ TST_BE_DOMAIN = f"api.tst.{SECOND_LVL_DOMAIN}.{TOP_DOMAIN}"
 FE_ECR_NAME = "frontend-registry"
 BE_ECR_NAME = "backend-registry"
 
-SSL_CERT_ARN = "arn:aws:acm:eu-west-1:046201199215:certificate/e6d1af5a-2bb4-440d-ab7e-1e361b534b46"
+SSL_CERT_ARN = "arn:aws:acm:eu-west-1:046201199215:certificate/1934a654-53e7-4c68-99ff-9e72b1ab212a"
 
 
 # TODO Setup applications environment variables
-# TODO Acc/Tst deployment unsafe warning browser
 # TODO Frontend + Backend must publish to ECR
 # TODO Frontend must handle this domain scheme
 # TODO Backend must allow CORS for this domain scheme
@@ -70,7 +69,8 @@ class ProjectName(Stack):
         )
 
     '''
-     SSL Certs should be created through the ui/cli for a each domain in combination with route 53 registrations
+     SSL Certs should be created through the ui/cli for a each domain in combination with route 53 registrations. This 
+     single cert should contain all the subdomains applicable.
     '''
 
     def fetch_ssl_cert(self) -> cert.ICertificate:
