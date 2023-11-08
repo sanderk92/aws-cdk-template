@@ -30,7 +30,6 @@ SSL_CERT_ARN = "arn:aws:acm:eu-west-1:046201199215:certificate/1934a654-53e7-4c6
 
 # TODO Setup applications environment variables
 # TODO Frontend + Backend must publish to ECR
-# TODO Frontend must handle this domain scheme
 # TODO Backend must allow CORS for this domain scheme
 class ProjectName(Stack):
 
