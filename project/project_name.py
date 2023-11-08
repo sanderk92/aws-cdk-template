@@ -44,8 +44,8 @@ class ProjectName(Stack):
         auth_server = self.authentication_server()
 
         clusters = [
-            ("Prd", PRD_FE_DOMAIN, PRD_BE_DOMAIN),
-            # ("Acc", ACC_FE_DOMAIN, ACC_BE_DOMAIN),
+            # ("Prd", PRD_FE_DOMAIN, PRD_BE_DOMAIN),
+            ("Acc", ACC_FE_DOMAIN, ACC_BE_DOMAIN),
             # ("Tst", TST_FE_DOMAIN, TST_BE_DOMAIN),
         ]
 
@@ -86,7 +86,7 @@ class ProjectName(Stack):
     def fetch_hosted_zone(self) -> r53.IHostedZone:
         return r53.HostedZone.from_lookup(
             self, "HostedZone",
-            domain_name=SECOND_LVL_DOMAIN
+            domain_name=f"{SECOND_LVL_DOMAIN}.{TOP_DOMAIN}"
         )
 
     '''
