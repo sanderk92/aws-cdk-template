@@ -179,7 +179,7 @@ class ProjectName(Stack):
             container_name=cluster_name + "BackendContainer",
             environment={"SPRING_PROFILES_ACTIVE": cluster_name.lower()},
             secrets=dict(
-                MY_SECRET=self.secret("MySecret")
+                MY_SECRET=self.secret(f"{cluster_name}MySecret")
             ),
             port_mappings=[ecs.PortMapping(
                 container_port=5050,
