@@ -9,7 +9,9 @@ import aws_cdk.aws_elasticloadbalancingv2 as elbv2
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_route53 as r53
 import aws_cdk.aws_route53_targets as r53_targets
+import aws_cdk.aws_secretsmanager as sm
 from aws_cdk import Stack, Duration, Size, RemovalPolicy
+from aws_cdk.aws_ecs import Secret
 from constructs import Construct
 
 TOP_DOMAIN = "com"
@@ -28,7 +30,6 @@ BE_ECR_NAME = "backend-registry"
 SSL_CERT_ARN = "arn:aws:acm:eu-west-1:046201199215:certificate/1934a654-53e7-4c68-99ff-9e72b1ab212a"
 
 
-# TODO Setup applications environment variables
 # TODO Frontend + Backend must publish to ECR
 class ProjectName(Stack):
 
@@ -41,20 +42,20 @@ class ProjectName(Stack):
         auth_server = self.authentication_server()
 
         clusters = [
-            # ("Prd", PRD_FE_DOMAIN, PRD_BE_DOMAIN),
-            ("Acc", ACC_FE_DOMAIN, ACC_BE_DOMAIN),
+            ("Prd", PRD_FE_DOMAIN, PRD_BE_DOMAIN),
+            # ("Acc", ACC_FE_DOMAIN, ACC_BE_DOMAIN),
             # ("Tst", TST_FE_DOMAIN, TST_BE_DOMAIN),
         ]
 
         for (cluster_name, frontend_domain, backend_domain) in clusters:
             cluster = self.create_cluster(cluster_name)
             frontend = self.frontend(cluster, cluster_name, frontend_ecr, ssl_cert)
-            backend = self.backend(cluster, cluster_name, backend_ecr, ssl_cert)
+            # backend = self.backend(cluster, cluster_name, backend_ecr, ssl_cert)
 
             self.authentication_client(auth_server, False)
             self.authentication_client(auth_server, True)
             self.dns_record(hosted_zone, frontend.load_balancer, frontend_domain)
-            self.dns_record(hosted_zone, backend.load_balancer, backend_domain)
+            # self.dns_record(hosted_zone, backend.load_balancer, backend_domain)
 
     '''
      Clusters can be removed and created at any time as long as all containers have stopped
@@ -176,6 +177,10 @@ class ProjectName(Stack):
             str(uuid.uuid4()),
             image=ecs.ContainerImage.from_ecr_repository(backend_ecr, "latest"),
             container_name=cluster_name + "BackendContainer",
+            environment={"SPRING_PROFILES_ACTIVE": cluster_name.lower()},
+            secrets=dict(
+                MY_SECRET=self.secret("MySecret")
+            ),
             port_mappings=[ecs.PortMapping(
                 container_port=5050,
             )],
@@ -198,6 +203,15 @@ class ProjectName(Stack):
             health_check_grace_period=Duration.seconds(60),
         )
         return backend_service
+
+    def secret(self, name: str) -> Secret:
+        return ecs.Secret.from_secrets_manager(
+            sm.Secret.from_secret_name_v2(
+                self,
+                id=str(uuid.uuid4()),
+                secret_name=name
+            )
+        )
 
     ''' 
      DNS Records may be recreated at any time
