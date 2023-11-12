@@ -23,8 +23,8 @@ class Production(ClusterStack):
         frontend = self.create_frontend(cluster, CLUSTER_NAME, frontend_ecr, ssl_cert)
         backend = self.create_backend(cluster, CLUSTER_NAME, backend_ecr, ssl_cert)
 
-        self.create_backend_authentication_client(auth_server)
         self.create_frontend_authentication_client(auth_server, FE_DOMAIN)
+        self.create_backend_authentication_client(auth_server, BE_DOMAIN)
         self.create_swagger_authentication_client(auth_server, BE_DOMAIN)
         self.create_dns_record(hosted_zone, frontend.load_balancer, FE_DOMAIN)
         self.create_dns_record(hosted_zone, backend.load_balancer, BE_DOMAIN)

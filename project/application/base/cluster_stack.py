@@ -233,7 +233,7 @@ class ClusterStack(Stack):
     @staticmethod
     def create_frontend_authentication_client(user_pool: cognito.IUserPool, domain_name: str) -> cognito.UserPoolClient:
         client = user_pool.add_client(
-            id=str(uuid.uuid4()),
+            id=f"FrontendClient:{domain_name}",
             access_token_validity=Duration.hours(1),
             generate_secret=False,
             o_auth=cognito.OAuthSettings(
@@ -246,9 +246,9 @@ class ClusterStack(Stack):
         return client
 
     @staticmethod
-    def create_backend_authentication_client(user_pool: cognito.IUserPool) -> cognito.UserPoolClient:
+    def create_backend_authentication_client(user_pool: cognito.IUserPool, domain_name: str) -> cognito.UserPoolClient:
         client = user_pool.add_client(
-            id=str(uuid.uuid4()),
+            id=f"BackendClient:{domain_name}",
             access_token_validity=Duration.hours(1),
             generate_secret=True,
             o_auth=cognito.OAuthSettings(
@@ -262,7 +262,7 @@ class ClusterStack(Stack):
     @staticmethod
     def create_swagger_authentication_client(user_pool: cognito.IUserPool, domain_name: str) -> cognito.UserPoolClient:
         client = user_pool.add_client(
-            id=str(uuid.uuid4()),
+            id=f"SwaggerClient:{domain_name}",
             access_token_validity=Duration.hours(1),
             generate_secret=False,
             o_auth=cognito.OAuthSettings(
