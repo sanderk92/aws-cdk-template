@@ -12,7 +12,6 @@ import aws_cdk.aws_route53_targets as r53_targets
 import aws_cdk.aws_secretsmanager as sm
 from aws_cdk import Size
 from aws_cdk import Stack, Duration
-from aws_cdk.aws_ecs import Secret
 
 TOP_DOMAIN = "com"
 SECOND_LVL_DOMAIN = "sanderkrabbenborg"
@@ -24,6 +23,7 @@ SSL_CERT_ARN = "arn:aws:acm:eu-west-1:046201199215:certificate/1934a654-53e7-4c6
 USER_POOL_ID = "eu-west-1_6wOiibFgH"
 
 
+# TODO Fix frontend deployment
 class ClusterStack(Stack):
 
     """
@@ -31,7 +31,7 @@ class ClusterStack(Stack):
     """
 
     '''
-     SSL Certs should be created through the ui/cli for each domain in combination with route 53 registrations. This 
+     SSL Certs should be created through the ui/cli in combination with route 53 registrations. This 
      single cert should contain all the subdomains applicable, such as those with acc and tst prefixes.
     '''
 
@@ -52,7 +52,8 @@ class ClusterStack(Stack):
         )
 
     '''
-     Authentication server should only be created once, and imported afterwards
+     Authentication server should only be created once, and imported afterwards. Creation of this resource
+     is stored as a separate stack.
     '''
 
     def fetch_authentication_server(self) -> cognito.IUserPool:
@@ -63,7 +64,8 @@ class ClusterStack(Stack):
         )
 
     '''
-     Registries should only be created once, and imported afterwards
+     Registries should only be created once, and imported afterwards. Creation of this resource is stored
+      as a separate stack.
     '''
 
     def fetch_registries(self) -> [ecr.IRepository, ecr.IRepository]:
@@ -97,6 +99,71 @@ class ClusterStack(Stack):
         )
 
     '''
+     Backend task definitions and services can be recreated for each update required
+    '''
+
+    def create_backend(
+            self,
+            cluster: ecs.ICluster,
+            cluster_name: str,
+            backend_ecr: ecr.IRepository,
+            ssl_cert: cert.ICertificate,
+            backend_cognito_client: cognito.UserPoolClient,
+            swagger_cognito_client: cognito.UserPoolClient,
+    ) -> ecsp.ApplicationLoadBalancedFargateService:
+        backend_task = ecs.FargateTaskDefinition(
+            self, cluster_name + "BackendTask",
+            cpu=256,
+            memory_limit_mib=512,
+                  )
+
+        backend_task.add_container(
+            str(uuid.uuid4()),
+            image=ecs.ContainerImage.from_ecr_repository(backend_ecr, "latest"),
+            container_name=cluster_name + "BackendContainer",
+            environment=dict(
+                SPRING_PROFILES_ACTIVE=cluster_name.lower(),
+                OIDC_SWAGGER_CLIENT_ID=swagger_cognito_client.user_pool_client_id,
+                OIDC_SERVER_CLIENT_ID=backend_cognito_client.user_pool_client_id,
+                # TODO This should be passed as a secret instead
+                OIDC_SERVER_CLIENT_SECRET=backend_cognito_client.user_pool_client_secret.unsafe_unwrap(),
+            ),
+            secrets=dict(
+                SERVER_HOST=self.fetch_secret(f"{cluster_name}Secrets", "ServerHost"),
+                DATABASE_URL=self.fetch_secret(f"{cluster_name}Secrets", "DatabaseUrl"),
+                DATABASE_DIALECT=self.fetch_secret(f"{cluster_name}Secrets", "DatabaseDialect"),
+                DATABASE_USERNAME=self.fetch_secret(f"{cluster_name}Secrets", "DatabaseUsername"),
+                DATABASE_PASSWORD=self.fetch_secret(f"{cluster_name}Secrets", "DatabasePassword"),
+                OIDC_PROVIDER_CONFIG_URL=self.fetch_secret(f"{cluster_name}Secrets", "OidcConfigUrl"),
+                OIDC_PROVIDER_JWK_URL=self.fetch_secret(f"{cluster_name}Secrets", "OidcJwkUrl"),
+                OIDC_USER_INFO_ENDPOINT=self.fetch_secret(f"{cluster_name}Secrets", "OidcUserInfoEndpoint"),
+            ),
+            port_mappings=[ecs.PortMapping(
+                container_port=8080,
+            )],
+            logging=ecs.LogDrivers.aws_logs(
+                stream_prefix=cluster_name.lower(),
+                mode=ecs.AwsLogDriverMode.NON_BLOCKING,
+                max_buffer_size=Size.mebibytes(1),
+            ),
+        )
+
+        backend_service = ecsp.ApplicationLoadBalancedFargateService(
+            self, str(uuid.uuid4()),
+            certificate=ssl_cert,
+            service_name=cluster_name + "BackendService",
+            cluster=cluster,
+            public_load_balancer=True,
+            redirect_http=True,
+            desired_count=1,
+            task_definition=backend_task,
+            # TODO This should use actuator to check health
+            health_check_grace_period=Duration.seconds(180),
+        )
+
+        return backend_service
+
+    '''
      Frontend task definitions and services can be recreated for each update required
     '''
 
@@ -106,6 +173,7 @@ class ClusterStack(Stack):
             cluster_name: str,
             frontend_ecr: ecr.IRepository,
             ssl_cert: cert.ICertificate,
+            frontend_client: cognito.UserPoolClient,
     ) -> ecsp.ApplicationLoadBalancedFargateService:
         frontend_task = ecs.FargateTaskDefinition(
             self, cluster_name + "FrontendTask",
@@ -141,68 +209,11 @@ class ClusterStack(Stack):
         return frontend_service
 
     '''
-     Backend task definitions and services can be recreated for each update required
-    '''
-
-    def create_backend(
-            self,
-            cluster: ecs.ICluster,
-            cluster_name: str,
-            backend_ecr: ecr.IRepository,
-            ssl_cert: cert.ICertificate,
-    ) -> ecsp.ApplicationLoadBalancedFargateService:
-        backend_task = ecs.FargateTaskDefinition(
-            self, cluster_name + "BackendTask",
-            cpu=256,
-            memory_limit_mib=512,
-        )
-
-        backend_task.add_container(
-            str(uuid.uuid4()),
-            image=ecs.ContainerImage.from_ecr_repository(backend_ecr, "latest"),
-            container_name=cluster_name + "BackendContainer",
-            environment=dict(SPRING_PROFILES_ACTIVE=cluster_name.lower()),
-            secrets=dict(
-                SERVER_HOST=self.fetch_secret(f"{cluster_name}Secrets", "ServerHost"),
-                DATABASE_URL=self.fetch_secret(f"{cluster_name}Secrets", "DatabaseUrl"),
-                DATABASE_DIALECT=self.fetch_secret(f"{cluster_name}Secrets", "DatabaseDialect"),
-                DATABASE_USERNAME=self.fetch_secret(f"{cluster_name}Secrets", "DatabaseUsername"),
-                DATABASE_PASSWORD=self.fetch_secret(f"{cluster_name}Secrets", "DatabasePassword"),
-                OIDC_SERVER_CLIENT_ID=self.fetch_secret(f"{cluster_name}Secrets", "OidcBackendClientId"),
-                OIDC_SERVER_CLIENT_SECRET=self.fetch_secret(f"{cluster_name}Secrets", "OidcBackendClientSecret"),
-                OIDC_SWAGGER_CLIENT_ID=self.fetch_secret(f"{cluster_name}Secrets", "OidcSwaggerOidcClientId"),
-                OIDC_PROVIDER_CONFIG_URL=self.fetch_secret(f"{cluster_name}Secrets", "OidcConfigUrl"),
-                OIDC_PROVIDER_JWK_URL=self.fetch_secret(f"{cluster_name}Secrets", "OidcJwkUrl"),
-            ),
-            port_mappings=[ecs.PortMapping(
-                container_port=8080,
-            )],
-            logging=ecs.LogDrivers.aws_logs(
-                stream_prefix=cluster_name.lower(),
-                mode=ecs.AwsLogDriverMode.NON_BLOCKING,
-                max_buffer_size=Size.mebibytes(1),
-            ),
-        )
-
-        backend_service = ecsp.ApplicationLoadBalancedFargateService(
-            self, str(uuid.uuid4()),
-            certificate=ssl_cert,
-            service_name=cluster_name + "BackendService",
-            cluster=cluster,
-            public_load_balancer=True,
-            redirect_http=True,
-            desired_count=1,
-            task_definition=backend_task,
-            health_check_grace_period=Duration.seconds(60),
-        )
-        return backend_service
-
-    '''
      Secrets can be created manually. With this method, a single environment variables can be fetched from a 
      multi key-value pair secret. 
     '''
 
-    def fetch_secret(self, name: str, field: str) -> Secret:
+    def fetch_secret(self, name: str, field: str) -> ecs.Secret:
         return ecs.Secret.from_secrets_manager(
             field=field,
             secret=sm.Secret.from_secret_name_v2(
