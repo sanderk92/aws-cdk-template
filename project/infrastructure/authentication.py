@@ -2,8 +2,7 @@ import aws_cdk.aws_cognito as cognito
 from aws_cdk import Stack, RemovalPolicy
 from constructs import Construct
 
-TOP_DOMAIN = "com"
-SECOND_LVL_DOMAIN = "sanderkrabbenborg"
+SERVER_PREFIX = "sanderkrabbenborg"
 
 
 class Authentication(Stack):
@@ -76,6 +75,6 @@ class Authentication(Stack):
         user_pool.add_domain(
             id="AuthenticationProviderCognitoDomain",
             cognito_domain=cognito.CognitoDomainOptions(
-                domain_prefix=SECOND_LVL_DOMAIN.lower(),
+                domain_prefix=SERVER_PREFIX.lower(),
             )
         )
