@@ -55,18 +55,6 @@ class FrontendStack(StackBase):
                 ignore_public_acls=False,
                 restrict_public_buckets=False,
             ),
-            # TODO check if this cors rule is required
-            cors=[s3.CorsRule(
-                allowed_headers=["*"],
-                allowed_origins=["*"],
-                allowed_methods=[
-                    s3.HttpMethods.GET,
-                    s3.HttpMethods.DELETE,
-                    s3.HttpMethods.PUT,
-                    s3.HttpMethods.POST,
-                    s3.HttpMethods.HEAD
-                ],
-            )],
             # TODO set to retain as bucket names are unique
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
