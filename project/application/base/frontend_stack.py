@@ -100,6 +100,7 @@ class FrontendStack(StackBase):
     DNS Records may be recreated at any time
     '''
 
+    # TODO www subdomain does not work, only without
     def create_dns_record(
             self,
             cloudfront: cf.Distribution,
