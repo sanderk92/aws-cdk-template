@@ -121,8 +121,12 @@ class BackendStack(StackBase):
             redirect_http=True,
             desired_count=1,
             task_definition=backend_task,
-            # TODO This should use actuator to check health
             health_check_grace_period=Duration.seconds(180),
+        )
+
+        # TODO Seems to fail the first time, probably due to low resources
+        backend_service.target_group.configure_health_check(
+            path="/actuator/health"
         )
 
         return backend_service
