@@ -13,7 +13,7 @@ from aws_cdk import RemovalPolicy
 
 from project.application.base.stack_base import StackBase
 
-GLOBAL_SSL_CERT_ARN = "arn:aws:acm:us-east-1:046201199215:certificate/5cec40b8-8bfd-460e-906f-07d67f2ff896"
+GLOBAL_SSL_CERT_ARN = "arn:aws:acm:us-east-1:046201199215:certificate/263923ff-71c4-4630-b93b-5a3fca30e9dd"
 
 
 class FrontendStack(StackBase):

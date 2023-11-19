@@ -3,12 +3,12 @@ from constructs import Construct
 from project.application.base.backend_stack import BackendStack
 from project.application.base.stack_base import SECOND_LVL_DOMAIN, TOP_DOMAIN
 
-CLUSTER_NAME = "Prd"
+CLUSTER_NAME = "Acc"
 
-BE_DOMAIN = f"api.{SECOND_LVL_DOMAIN}.{TOP_DOMAIN}"
+BE_DOMAIN = f"api.acc.{SECOND_LVL_DOMAIN}.{TOP_DOMAIN}"
 
 
-class ProductionBackend(BackendStack):
+class AcceptanceBackend(BackendStack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs: object) -> None:
         super().__init__(scope, construct_id, **kwargs)

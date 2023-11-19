@@ -2,6 +2,8 @@
 
 import aws_cdk as cdk
 
+from project.application.acceptance_backend import AcceptanceBackend
+from project.application.acceptance_frontend import AcceptanceFrontend
 from project.application.production_backend import ProductionBackend
 from project.application.production_frontend import ProductionFrontend
 from project.infrastructure.authentication import Authentication
@@ -17,5 +19,7 @@ Authentication(app, "AuthenticationServer", env=env)
 
 ProductionBackend(app, "ProductionBackend", env=env)
 ProductionFrontend(app, "ProductionFrontend", env=env)
+AcceptanceBackend(app, "AcceptanceBackend", env=env)
+AcceptanceFrontend(app, "AcceptanceFrontend", env=env)
 
 app.synth()
