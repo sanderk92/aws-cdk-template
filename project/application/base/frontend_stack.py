@@ -114,7 +114,7 @@ class FrontendStack(StackBase):
             access_token_validity=Duration.hours(1),
             generate_secret=False,
             o_auth=cognito.OAuthSettings(
-                callback_urls=[f"https://{domain_name}"],
+                callback_urls=[f"https://{domain_name}/redirect"],
                 flows=cognito.OAuthFlows(
                     authorization_code_grant=True,
                 ),
