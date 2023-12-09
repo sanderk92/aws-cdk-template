@@ -21,4 +21,4 @@ class ProductionFrontend(FrontendStack):
 
         bucket = self.create_bucket(CLUSTER_NAME, FE_DOMAIN)
         cloudfront = self.create_distribution(bucket, ssl_cert, CLUSTER_NAME, FE_DOMAIN)
-        self.create_dns_record(cloudfront, FE_DOMAIN, hosted_zone)
+        self.create_dns_records(cloudfront, FE_DOMAIN, hosted_zone)
