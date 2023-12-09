@@ -7,13 +7,17 @@ from project.application.acceptance_frontend import AcceptanceFrontend
 from project.application.production_backend import ProductionBackend
 from project.application.production_frontend import ProductionFrontend
 from project.infrastructure.authentication import Authentication
+from project.infrastructure.permissions import Permissions
 from project.infrastructure.registries import Registries
 
-app = cdk.App()
-
 # TODO Fetch account from env variable
+# TODO Fix resource id's for updates
+# TODO Update readme for initial setup (i.e. creating certs, running order)
+
+app = cdk.App()
 env = cdk.Environment(account="046201199215", region="eu-west-1")
 
+Permissions(app, "Permissions", env=env)
 Registries(app, "ImageRegistries", env=env)
 Authentication(app, "AuthenticationServer", env=env)
 
