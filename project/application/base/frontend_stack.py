@@ -54,9 +54,7 @@ class FrontendStack(StackBase):
                 ignore_public_acls=False,
                 restrict_public_buckets=False,
             ),
-            # TODO set to retain as bucket names are unique
-            removal_policy=RemovalPolicy.DESTROY,
-            auto_delete_objects=True,
+            removal_policy=RemovalPolicy.RETAIN,
         )
 
         # TODO this bucket policy still requires manual deletion: 'DENY *'
