@@ -10,48 +10,6 @@ directory.  To create the virtualenv it assumes that there is a `python3`
 package. If for any reason the automatic creation of the virtualenv fails,
 you can create the virtualenv manually.
 
-## Attention
-
-This CDK is currently ment to be run once to set up the initial environment, after which updates are done manually.
-Prior to running this CDK, the required ECR's and SSL certificate + Hosted Zone have been created manually. These 
-components are referenced in this CDK.
-
-## Required roles
-
-The user to execute this CDK script has to have the roles below assigned to it. However, they may need to be pruned 
-and/or combined in a single json policy:
-
-1. AdministratorAccess	AWS managed - job function	Directly
-2. AmazonEC2ContainerRegistryFullAccess	AWS managed	Directly
-3. AmazonEC2FullAccess	AWS managed	Directly
-4. AmazonECS_FullAccess	AWS managed	Directly
-5. AmazonElasticContainerRegistryPublicFullAccess	AWS managed	Directly
-6. AmazonS3FullAccess	AWS managed	Directly
-7. AmazonSSMFullAccess	AWS managed	Directly
-8. AWSCloudFormationFullAccess	AWS managed	Directly
-9. IAMFullAccess
-10. custom-policy
-
-`custom-policy.json`:
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:Describe*",
-                "iam:ListRoles",
-                "sts:AssumeRole",
-                "tag:GetResources",
-                "cloudformation:*"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
-
 ## Setup instructions Linux/MacOS
 
 To manually create a virtualenv:
@@ -95,4 +53,15 @@ To add additional dependencies, for example other CDK libraries, just add
 them to your `setup.py` file and rerun the `pip install -r requirements.txt`
 command.
 
+# Initial setup
+
+When setting up a project using this CDK, you should perform the following actions in the specified order:
+- Create a new root account
+- Run `cdk deploy Permissions` with this root account
+- Create a IAM user
+- Assign the IAM user to the created group
+- Create the required SSL certificates (including all subdomains)
+- Set the required constants in `backend_stack.py`, `frontend_stack.py` and `stack_base.py`
+- Run `cdk deploy {stack}` for all remaining stacks in the `infrastructure` folder
+- Run `cdk deploy {stack}` for the required stacks in the `application` folder
 
