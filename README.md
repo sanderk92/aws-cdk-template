@@ -61,7 +61,7 @@ When setting up a project using this CDK, you should perform the following actio
 - Create a IAM user
 - Assign the IAM user to the created group
 - Create the required SSL certificates (including all subdomains)
-- Set the required constants in `backend_stack.py`, `frontend_stack.py` and `stack_base.py`
+- Set the required constants in `app_config.py`
 - Run `cdk deploy {stack}` for all remaining stacks in the `infrastructure` folder
 - Run `cdk deploy {stack}` for the required stacks in the `application` folder
 

@@ -13,10 +13,8 @@ import aws_cdk.aws_secretsmanager as sm
 from aws_cdk import Duration
 from aws_cdk import Size
 
+from app_config import REGIONAL_SSL_CERT_ARN, BACKEND_ECR_ARN
 from project.application.base.stack_base import StackBase
-
-ECR_NAME = "backend-registry"
-REGIONAL_SSL_CERT_ARN = "arn:aws:acm:eu-west-1:046201199215:certificate/1934a654-53e7-4c68-99ff-9e72b1ab212a"
 
 
 class BackendStack(StackBase):
@@ -43,9 +41,9 @@ class BackendStack(StackBase):
             assumed_by=iam.ServicePrincipal('ecs-tasks.amazonaws.com')
         )
 
-        backend_ecr = ecr.Repository.from_repository_name(
+        backend_ecr = ecr.Repository.from_repository_arn(
             self, "BackendRegistry",
-            repository_name=ECR_NAME,
+            repository_arn=BACKEND_ECR_ARN,
         )
 
         backend_ecr.grant_pull(ecs_role)

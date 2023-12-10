@@ -5,13 +5,10 @@ import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_route53 as r53
 from aws_cdk import Stack
 
-TOP_DOMAIN = "com"
-SECOND_LVL_DOMAIN = "sanderkrabbenborg"
-USER_POOL_ID = "eu-west-1_6wOiibFgH"
+from app_config import SECOND_LVL_DOMAIN, TOP_DOMAIN, USER_POOL_ARN
 
 
 class StackBase(Stack):
-
     """
     The stack base contains methods and information required by any application in any cluster to deploy.
     """
@@ -43,8 +40,8 @@ class StackBase(Stack):
     '''
 
     def fetch_authentication_server(self) -> cognito.IUserPool:
-        return cognito.UserPool.from_user_pool_id(
+        return cognito.UserPool.from_user_pool_arn(
             self,
             id=str(uuid.uuid4()),
-            user_pool_id=USER_POOL_ID,
+            user_pool_arn=USER_POOL_ARN,
         )

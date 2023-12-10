@@ -12,7 +12,6 @@ from project.infrastructure.registries import Registries
 
 # TODO Fetch account from env variable
 # TODO Fix resource id's for updates
-# TODO Better localize configurable parameters
 
 app = cdk.App()
 env = cdk.Environment(account="046201199215", region="eu-west-1")

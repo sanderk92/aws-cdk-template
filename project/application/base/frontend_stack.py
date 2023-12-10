@@ -1,19 +1,18 @@
 import uuid
 
+import aws_cdk.aws_certificatemanager as cert
 import aws_cdk.aws_cloudfront as cf
 import aws_cdk.aws_cloudfront_origins as cfo
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_route53 as r53
-import aws_cdk.aws_certificatemanager as cert
 import aws_cdk.aws_route53_targets as r53_targets
 import aws_cdk.aws_s3 as s3
 from aws_cdk import Duration
 from aws_cdk import RemovalPolicy
 
+from app_config import GLOBAL_SSL_CERT_ARN
 from project.application.base.stack_base import StackBase
-
-GLOBAL_SSL_CERT_ARN = "arn:aws:acm:us-east-1:046201199215:certificate/a51769f3-9daf-4597-a73a-7be81c514a06"
 
 
 class FrontendStack(StackBase):
