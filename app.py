@@ -11,7 +11,6 @@ from project.infrastructure.authentication import Authentication
 from project.infrastructure.permissions import Permissions
 from project.infrastructure.registries import Registries
 
-# TODO Fix resource id's for updates
 
 app = cdk.App()
 

@@ -1,5 +1,3 @@
-import uuid
-
 import aws_cdk.aws_certificatemanager as cert
 import aws_cdk.aws_cloudfront as cf
 import aws_cdk.aws_cloudfront_origins as cfo
@@ -26,17 +24,13 @@ class FrontendStack(StackBase):
     '''
 
     def fetch_global_ssl_cert(self) -> cert.ICertificate:
-        return self.fetch_ssl_cert("GlobalTLSCertificate", GLOBAL_SSL_CERT_ARN)
+        return self.fetch_ssl_cert("GlobalTLSCertificateImport", GLOBAL_SSL_CERT_ARN)
 
     '''
     Frontend bucket should not be recreated, as the name must be unique and equal to our domain
     '''
 
-    def create_bucket(
-            self,
-            cluster_name: str,
-            domain_name: str,
-    ) -> s3.Bucket:
+    def create_bucket(self, cluster_name: str, domain_name: str) -> s3.Bucket:
         bucket = s3.Bucket(
             self,
             f"{cluster_name}FrontendBucket",
@@ -61,10 +55,6 @@ class FrontendStack(StackBase):
 
         return bucket
 
-    ''' 
-    Distributions may be recreated at any time
-    '''
-
     def create_distribution(self, bucket: s3.Bucket, ssl_cert: cert.ICertificate, cluster_name: str, domain_name: str):
         return cf.Distribution(
             self,
@@ -80,10 +70,6 @@ class FrontendStack(StackBase):
             price_class=cf.PriceClass.PRICE_CLASS_ALL
         )
 
-    ''' 
-    DNS Records may be recreated at any time
-    '''
-
     def create_dns_records(
             self,
             cloudfront: cf.Distribution,
@@ -91,7 +77,7 @@ class FrontendStack(StackBase):
             hosted_zone: r53.IHostedZone
     ) -> [r53.ARecord, r53.CnameRecord]:
         top_domain_record = r53.ARecord(
-            self, str(uuid.uuid4()),
+            self, f"FrontendDnsRecord:{domain_name}",
             zone=hosted_zone,
             delete_existing=False,
             record_name=domain_name,
@@ -99,7 +85,7 @@ class FrontendStack(StackBase):
         )
 
         www_subdomain_record = r53.CnameRecord(
-            self, str(uuid.uuid4()),
+            self, f"FrontendDnsRecord:www.{domain_name}",
             zone=hosted_zone,
             delete_existing=False,
             record_name="www",
@@ -108,14 +94,10 @@ class FrontendStack(StackBase):
 
         return top_domain_record, www_subdomain_record
 
-    '''
-    Authentication clients can be recreated at any time, as their values are passed through cdk
-    '''
-
     @staticmethod
-    def create_authentication_client(user_pool: cognito.IUserPool, domain_name: str) -> cognito.UserPoolClient:
+    def create_web_client(user_pool: cognito.IUserPool, cluster_name: str, domain_name: str) -> cognito.UserPoolClient:
         return user_pool.add_client(
-            id=f"FrontendClient:{domain_name}",
+            id=f"{cluster_name}FrontendClient",
             access_token_validity=Duration.hours(1),
             generate_secret=False,
             o_auth=cognito.OAuthSettings(

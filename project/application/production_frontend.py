@@ -17,7 +17,7 @@ class ProductionFrontend(FrontendStack):
         ssl_cert = self.fetch_global_ssl_cert()
 
         auth_server = self.fetch_authentication_server()
-        self.create_authentication_client(auth_server, FE_DOMAIN)
+        self.create_web_client(auth_server, CLUSTER_NAME, FE_DOMAIN)
 
         bucket = self.create_bucket(CLUSTER_NAME, FE_DOMAIN)
         cloudfront = self.create_distribution(bucket, ssl_cert, CLUSTER_NAME, FE_DOMAIN)

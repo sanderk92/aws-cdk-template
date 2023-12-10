@@ -69,7 +69,9 @@ When setting up a project using this CDK, you should perform the following actio
 
 - Create an IAM user with access key
 - Assign the permission group to this user
-- Create the required SSL certificates (including all subdomains)
+- Create the required SSL certificates in the CertificatesManager for the backend (regional)
+- Create the required SSL certificates in the CertificatesManager for the frontend (global)
+- Create the required secrets in the SecretsManager
 - Set the required constants in `app_config.py`
 - Run `aws config` and configure the user access key
 - Set env variable `CDK_ACCOUNT` to the account id (the number can be found in the account arn)

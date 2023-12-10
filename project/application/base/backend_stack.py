@@ -1,5 +1,3 @@
-import uuid
-
 import aws_cdk.aws_certificatemanager as cert
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ecr as ecr
@@ -28,7 +26,7 @@ class BackendStack(StackBase):
     '''
 
     def fetch_regional_ssl_cert(self) -> cert.ICertificate:
-        return self.fetch_ssl_cert("RegionalTLSCertificate", REGIONAL_SSL_CERT_ARN)
+        return self.fetch_ssl_cert("RegionalTLSCertificateImport", REGIONAL_SSL_CERT_ARN)
 
     '''
     Registries should only be created once, and imported afterwards. Creation of this resource is stored
@@ -37,12 +35,12 @@ class BackendStack(StackBase):
 
     def fetch_registry(self) -> ecr.IRepository:
         ecs_role = iam.Role(
-            self, "EcsTaskRole",
+            self, "EcrEcsTaskRole",
             assumed_by=iam.ServicePrincipal('ecs-tasks.amazonaws.com')
         )
 
         backend_ecr = ecr.Repository.from_repository_arn(
-            self, "BackendRegistry",
+            self, "BackendRegistryImport",
             repository_arn=BACKEND_ECR_ARN,
         )
 
@@ -50,19 +48,11 @@ class BackendStack(StackBase):
 
         return backend_ecr
 
-    '''
-    Clusters can be created whenever required
-    '''
-
     def create_cluster(self, name: str) -> ecs.Cluster:
         return ecs.Cluster(
             self, f"{name}Cluster",
             cluster_name=name
         )
-
-    '''
-    Backend task definitions and services can be recreated for each update required
-    '''
 
     def create_service(
             self,
@@ -74,15 +64,15 @@ class BackendStack(StackBase):
             swagger_cognito_client: cognito.UserPoolClient,
     ) -> ecsp.ApplicationLoadBalancedFargateService:
         backend_task = ecs.FargateTaskDefinition(
-            self, cluster_name + "BackendTask",
+            self, f"{cluster_name}BackendTask",
             cpu=256,
             memory_limit_mib=512,
         )
 
         backend_task.add_container(
-            str(uuid.uuid4()),
+            f"{cluster_name}BackendContainer",
             image=ecs.ContainerImage.from_ecr_repository(backend_ecr, "latest"),
-            container_name=cluster_name + "BackendContainer",
+            container_name=f"{cluster_name}BackendContainer",
             environment=dict(
                 SPRING_PROFILES_ACTIVE=cluster_name.lower(),
                 OIDC_SWAGGER_CLIENT_ID=swagger_cognito_client.user_pool_client_id,
@@ -111,9 +101,9 @@ class BackendStack(StackBase):
         )
 
         backend_service = ecsp.ApplicationLoadBalancedFargateService(
-            self, str(uuid.uuid4()),
+            self, f"{cluster_name}BackendService",
             certificate=ssl_cert,
-            service_name=cluster_name + "BackendService",
+            service_name=f"{cluster_name}BackendService",
             cluster=cluster,
             public_load_balancer=True,
             redirect_http=True,
@@ -129,24 +119,14 @@ class BackendStack(StackBase):
 
         return backend_service
 
-    '''
-    Secrets can be created manually. With this method, a single environment variables can be fetched from a 
-    multi key-value pair secret. 
-    '''
-
     def fetch_secret(self, name: str, field: str) -> ecs.Secret:
         return ecs.Secret.from_secrets_manager(
             field=field,
             secret=sm.Secret.from_secret_name_v2(
-                self,
-                id=str(uuid.uuid4()),
+                self, f"{name}.{field}",
                 secret_name=name
             )
         )
-
-    ''' 
-    DNS Records may be recreated at any time
-    '''
 
     def create_dns_record(
             self,
@@ -155,21 +135,20 @@ class BackendStack(StackBase):
             domain_name: str,
     ) -> r53.ARecord:
         return r53.ARecord(
-            self, str(uuid.uuid4()),
+            self, f"BackendDnsRecord:{domain_name}",
             zone=hosted_zone,
             delete_existing=False,
             record_name=domain_name,
             target=r53.RecordTarget.from_alias(r53_targets.LoadBalancerTarget(loadbalancer)),
         )
 
-    '''
-    Authentication clients can be recreated at any time, as their values are passed through cdk
-    '''
-
     @staticmethod
-    def create_authentication_client(user_pool: cognito.IUserPool, domain_name: str) -> cognito.UserPoolClient:
-        client = user_pool.add_client(
-            id=f"BackendClient:{domain_name}",
+    def create_server_authentication_client(
+            user_pool: cognito.IUserPool,
+            cluster_name: str
+    ) -> cognito.UserPoolClient:
+        return user_pool.add_client(
+            f"{cluster_name}BackendClient",
             access_token_validity=Duration.hours(1),
             generate_secret=True,
             o_auth=cognito.OAuthSettings(
@@ -178,16 +157,15 @@ class BackendStack(StackBase):
                 ),
             ),
         )
-        return client
-
-    '''
-    Authentication clients can be recreated at any time, as their values are passed through cdk
-    '''
 
     @staticmethod
-    def create_swagger_authentication_client(user_pool: cognito.IUserPool, domain_name: str) -> cognito.UserPoolClient:
-        client = user_pool.add_client(
-            id=f"SwaggerClient:{domain_name}",
+    def create_swagger_authentication_client(
+            user_pool: cognito.IUserPool,
+            domain_name: str,
+            cluster_name: str
+    ) -> cognito.UserPoolClient:
+        return user_pool.add_client(
+            id=f"{cluster_name}SwaggerClient",
             access_token_validity=Duration.hours(1),
             generate_secret=False,
             o_auth=cognito.OAuthSettings(
@@ -197,4 +175,3 @@ class BackendStack(StackBase):
                 ),
             ),
         )
-        return client

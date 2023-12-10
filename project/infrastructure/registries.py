@@ -9,13 +9,8 @@ class Registries(Stack):
         super().__init__(scope, construct_id, **kwargs)
         self.create_registries()
 
-    def create_registries(self):
-        ecr.Repository(
-            self, "FrontendRegistry",
-            repository_name="frontend-registry"
-        )
-
-        ecr.Repository(
+    def create_registries(self) -> ecr.Repository:
+        return ecr.Repository(
             self, "BackendRegistry",
             repository_name="backend-registry"
         )

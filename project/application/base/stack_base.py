@@ -1,5 +1,3 @@
-import uuid
-
 import aws_cdk.aws_certificatemanager as cert
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_route53 as r53
@@ -30,18 +28,17 @@ class StackBase(Stack):
 
     def fetch_hosted_zone(self) -> r53.IHostedZone:
         return r53.HostedZone.from_lookup(
-            self, "HostedZone",
+            self, "HostedZoneImport",
             domain_name=f"{SECOND_LVL_DOMAIN}.{TOP_DOMAIN}"
         )
 
     '''
-    Authentication server should only be created once, and imported afterwards. Creation of this resource
-    is stored as a separate stack.
+    Needless to say, authentication servers should obviously never be removed!
     '''
 
     def fetch_authentication_server(self) -> cognito.IUserPool:
         return cognito.UserPool.from_user_pool_arn(
             self,
-            id=str(uuid.uuid4()),
+            id="AuthenticationServer",
             user_pool_arn=USER_POOL_ARN,
         )
