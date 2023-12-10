@@ -56,12 +56,23 @@ command.
 # Initial setup
 
 When setting up a project using this CDK, you should perform the following actions in the specified order:
-- Create a new root account
-- Run `cdk deploy Permissions` with this root account
-- Create a IAM user
-- Assign the IAM user to the created group
+
+### 1. Permission group
+
+- Create a new root account with access key
+- Run `aws config` and configure the root access key
+- Set env variable `CDK_ACCOUNT` to the account id
+- Run `cdk deploy Permissions`
+- Remove the access key for the root account
+
+### 2. Deployment
+
+- Create an IAM user with access key
+- Assign the permission group to this user
 - Create the required SSL certificates (including all subdomains)
 - Set the required constants in `app_config.py`
+- Run `aws config` and configure the user access key
+- Set env variable `CDK_ACCOUNT` to the account id
 - Run `cdk deploy {stack}` for all remaining stacks in the `infrastructure` folder
 - Run `cdk deploy {stack}` for the required stacks in the `application` folder
 

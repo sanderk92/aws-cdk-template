@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 
 import aws_cdk as cdk
 
@@ -10,11 +11,11 @@ from project.infrastructure.authentication import Authentication
 from project.infrastructure.permissions import Permissions
 from project.infrastructure.registries import Registries
 
-# TODO Fetch account from env variable
 # TODO Fix resource id's for updates
 
 app = cdk.App()
-env = cdk.Environment(account="046201199215", region="eu-west-1")
+
+env = cdk.Environment(account=os.environ.get('CDK_ACCOUNT'), region="eu-west-1")
 
 Permissions(app, "Permissions", env=env)
 Registries(app, "ImageRegistries", env=env)
