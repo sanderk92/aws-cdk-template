@@ -61,7 +61,7 @@ When setting up a project using this CDK, you should perform the following actio
 
 - Create a new root account with access key
 - Run `aws config` and configure the root access key
-- Set env variable `CDK_ACCOUNT` to the account id
+- Set env variable `CDK_ACCOUNT` to the account id (the number can be found in the account arn)
 - Run `cdk deploy Permissions`
 - Remove the access key for the root account
 
@@ -72,7 +72,7 @@ When setting up a project using this CDK, you should perform the following actio
 - Create the required SSL certificates (including all subdomains)
 - Set the required constants in `app_config.py`
 - Run `aws config` and configure the user access key
-- Set env variable `CDK_ACCOUNT` to the account id
+- Set env variable `CDK_ACCOUNT` to the account id (the number can be found in the account arn)
 - Run `cdk deploy {stack}` for all remaining stacks in the `infrastructure` folder
 - Run `cdk deploy {stack}` for the required stacks in the `application` folder
 
