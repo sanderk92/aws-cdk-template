@@ -35,7 +35,7 @@ class FrontendStack(StackBase):
             self,
             f"{cluster_name}FrontendBucket",
             encryption=s3.BucketEncryption.S3_MANAGED,
-            enforce_ssl=True,
+            enforce_ssl=False,  # redirected by distribution
             versioned=False,
             public_read_access=True,
             bucket_name=domain_name,
@@ -50,7 +50,6 @@ class FrontendStack(StackBase):
             removal_policy=RemovalPolicy.RETAIN,
         )
 
-        # TODO this bucket policy still requires manual deletion: 'DENY *'
         bucket.grant_read(iam.AnyPrincipal())
 
         return bucket
@@ -63,6 +62,7 @@ class FrontendStack(StackBase):
             domain_names=[f"www.{domain_name}", domain_name],
             enabled=True,
             default_behavior=cf.BehaviorOptions(
+                viewer_protocol_policy=cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 origin=cfo.S3Origin(
                     bucket=bucket,
                 )
