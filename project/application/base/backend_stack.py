@@ -109,12 +109,15 @@ class BackendStack(StackBase):
             redirect_http=True,
             desired_count=1,
             task_definition=backend_task,
-            health_check_grace_period=Duration.seconds(180),
+            health_check_grace_period=Duration.seconds(420),
         )
 
-        # TODO Seems to fail the first time, probably due to low resources
         backend_service.target_group.configure_health_check(
             path="/actuator/health"
+        )
+
+        backend_service.load_balancer.set_attribute(
+            'idle_timeout.timeout_seconds', '420'
         )
 
         return backend_service
